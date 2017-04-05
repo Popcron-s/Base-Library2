@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{46C0420C-AF7F-4F3A-8439-A67F1DAACB60}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)OpenGL.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Win32_API.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Windows.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)FileLoader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenGL.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Timer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Win32_API.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Windows.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)WinInput.h" />
+  </ItemGroup>
+</Project>

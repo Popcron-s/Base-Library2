@@ -1,0 +1,21 @@
+// 모든 하위 프로젝트/모듈에 공통되는 구성 옵션을 추가할 수 있는 최상위 빌드 파일입니다.
+buildscript {
+    repositories {
+       jcenter()
+       mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle-experimental:0.4.0'
+
+        // 참고: 응용 프로그램 종속성을 여기에 배치하지 마십시오. 해당 항목은
+        // 개별 모듈 build.gradle 파일에 속합니다.
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+}
