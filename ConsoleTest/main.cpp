@@ -18,8 +18,8 @@
 
 class test_obj : public OBJECT{
 private:
-	float f;
-	bool turn;
+	_Graph* ani[4];
+	void* pointer[4];
 
 public:
 	test_obj(){
@@ -54,12 +54,13 @@ public:
 		temp.scl = { 0.3f, 0.5f, 1.0f};
 		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
 		t_skel.Create(scr, LEFT, temp);
+		
 		temp.pos = {-1.0f,-0.5f, 0.0f};
 		temp.rot = { 0.0f, 0.0f, 0.0f};
 		temp.scl = { 0.3f, 0.5f, 1.0f};
 		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
 		t_skel.Create(scr, RIGHT, temp);
-		
+
 		scr.Left(0);
 
 		temp.pos = {0.0f, 2.0f, 0.0f};
@@ -76,35 +77,63 @@ public:
 		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
 		t_skel.Create(scr, LEFT, temp);
 
-		f = 0.0f;
-		turn = false;
+		scr = t_skel.Begin();
+		scr.Left(0);
+		ani[0] = new _Graph_template<FLOAT>(scr.Data().rot.z,5);	//LU	//-15~30
+		pointer[0] = scr;
+		scr.Left(0);
+		ani[1] = new _Graph_template<FLOAT>(scr.Data().rot.z,3);	//LD	//0~15
+		pointer[1] = scr;
+		scr.Prev(); scr.Prev(); scr.Right(0);
+		ani[2] = new _Graph_template<FLOAT>(scr.Data().rot.z,5);	//RU	//-15~30
+		pointer[2] = scr;
+		scr.Left(0);
+		ani[3] = new _Graph_template<FLOAT>(scr.Data().rot.z,3);	//RD	//0~15
+		pointer[3] = scr;
+
+		_Graph_template<FLOAT>* t_ani = (_Graph_template<FLOAT>*)(ani[0]);
+		t_ani->SetNode(0, (3.141592f*(-15.0f))/180.0f, _GRAPH::LINEAR,    0);
+		t_ani->SetNode(1,							0, _GRAPH::LINEAR,  200);
+		t_ani->SetNode(2, (3.141592f*( 45.0f))/180.0f, _GRAPH::LINEAR,  800);
+		t_ani->SetNode(3,							0, _GRAPH::LINEAR, 1400);
+		t_ani->SetNode(4, (3.141592f*(-15.0f))/180.0f, _GRAPH::LINEAR, 1600);
+		t_ani->SetLoop(true);
+		//t_ani->Play();
+
+		t_ani = (_Graph_template<FLOAT>*)(ani[1]);
+		t_ani->SetNode(0,							0, _GRAPH::LINEAR,    0);
+		t_ani->SetNode(1, (3.141592f*( 15.0f))/180.0f, _GRAPH::LINEAR,  800);
+		t_ani->SetNode(2,							0, _GRAPH::LINEAR, 1600);
+		t_ani->SetLoop(true);
+		//t_ani->Play();
+
+		t_ani = (_Graph_template<FLOAT>*)(ani[2]);
+		t_ani->SetNode(0, (3.141592f*( 45.0f))/180.0f, _GRAPH::LINEAR,    0);
+		t_ani->SetNode(1,							0, _GRAPH::LINEAR,  600);
+		t_ani->SetNode(2, (3.141592f*(-15.0f))/180.0f, _GRAPH::LINEAR,  800);
+		t_ani->SetNode(3,							0, _GRAPH::LINEAR, 1000);
+		t_ani->SetNode(4, (3.141592f*( 45.0f))/180.0f, _GRAPH::LINEAR, 1600);
+		t_ani->SetLoop(true);
+		//t_ani->Play();
+
+		t_ani = (_Graph_template<FLOAT>*)(ani[3]);
+		t_ani->SetNode(0, (3.141592f*( 15.0f))/180.0f, _GRAPH::LINEAR,    0);
+		t_ani->SetNode(1,							0, _GRAPH::LINEAR,  800);
+		t_ani->SetNode(2, (3.141592f*( 15.0f))/180.0f, _GRAPH::LINEAR, 1600);
+		t_ani->SetLoop(true);
+		t_ani->Play();
 	}
 	~test_obj(){Map::GetSingleton()->GetLayer(0).RemoveObject(this);}
 	void update(){
-		(turn)?f+=0.5f:f-=0.5f;
-		std::cout<< f <<std::endl;
-		WLTree<JOINT>::searcher scr = GetSkeletal()->skeletal.Begin();
-		MATRIX4x4 p = scr.Data().world;
-		scr.Left(0);
-		scr.Data().rot = {0.0f, 0.0f, (3.141592f*((f*3.0f)-15.0f))/180.0f};
-		scr.Data().world = Graphic_Renderer::SetWorldMatrix(scr.Data().pos, scr.Data().rot, scr.Data().scl, p);
-		p = scr.Data().world;
-
-		scr.Left(0);
-		scr.Data().rot = {0.0f, 0.0f, (3.141592f*f)/180.0f};
-		scr.Data().world = Graphic_Renderer::SetWorldMatrix(scr.Data().pos, scr.Data().rot, scr.Data().scl, p);
-		
-		scr.Prev(); scr.Prev(); p = scr.Data().world; scr.Right(0);
-		scr.Data().rot = {0.0f, 0.0f, (3.141592f*((-f*3.0f)+30.0f))/180.0f};
-		scr.Data().world = Graphic_Renderer::SetWorldMatrix(scr.Data().pos, scr.Data().rot, scr.Data().scl, p);
-		p = scr.Data().world;
-
-		scr.Left(0);
-		scr.Data().rot = {0.0f, 0.0f, (3.141592f*(-f+15.0f))/180.0f};
-		scr.Data().world = Graphic_Renderer::SetWorldMatrix(scr.Data().pos, scr.Data().rot, scr.Data().scl, p);
-		
-		if(f >= 15.0f){turn = false;}
-		else if(f <= 0.0f){turn = true;}
+		WLTree<JOINT>::searcher scr;
+		for(UINT i = 0 ; i<4 ; ++i){
+			(ani[i])->update(MainSystem::GetSingleton()->GetTick());
+			scr = pointer[i];
+			scr.Prev();
+			MATRIX4x4 p = scr.Data().world;
+			scr = pointer[i];
+			scr.Data().world = Graphic_Renderer::SetWorldMatrix(scr.Data().pos, scr.Data().rot, scr.Data().scl, p);
+		}
 	}
 };
 

@@ -5,8 +5,7 @@ namespace _GRAPH{
 		NONE = 0,
 		STOP,
 		PAUSE,
-		PLAY_ONCE,
-		PLAT_LOOP
+		PLAY
 	};
 	enum INTERPOLATION{
 		POINT,

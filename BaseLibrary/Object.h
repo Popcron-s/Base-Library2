@@ -52,6 +52,83 @@ struct SCREEN{
 	MATRIX4x4 view,proj;
 };
 
+class _Graph{
+protected:
+	_GRAPH::TYPE type;
+	UINT time;
+	bool Loop;
+	bool Auto;
+
+public:
+	_Graph() : type(_GRAPH::STOP), time(0), Loop(false), Auto(false){}
+	~_Graph(){}
+
+	void SetLoop(bool b){Loop = b;}
+	bool IsLoop(){return Loop;}
+
+	void SetAuto(bool b){Auto = b;}
+	bool IsAuto(){return Auto;}
+
+	void Play(){type = _GRAPH::PLAY;}
+	void Stop(){type = _GRAPH::STOP;}
+	void Pause(){type = _GRAPH::PAUSE;}
+
+	virtual void update(UINT tick) = 0;
+};
+
+template <typename T>
+class _Graph_template : public _Graph{
+private:
+	T& target;
+	struct _node{
+		T value;
+		_GRAPH::INTERPOLATION infor;
+		UINT time;
+	}*arr;
+	const UINT arr_num;
+	UINT cur;
+
+public:
+	_Graph_template(T& t, UINT n) : _Graph(), target(t), arr(new _node[n]), arr_num(n), cur(0){}
+	_Graph_template(){delete [] arr;}
+
+	//_node& operator [](UINT num){return arr[num];}
+
+	void SetNode(UINT n, T v, _GRAPH::INTERPOLATION i, UINT t){
+		arr[n] = {v,i,t};
+	}
+
+	void Interpolation(T prev, T next, FLOAT weight){
+		target = prev + ((next-prev)*weight);
+		std::cout<< target <<std::endl;
+		return;
+	}
+
+	void update(UINT tick){
+		if(type != _GRAPH::PLAY){return;}
+		time += tick;
+		while(true){
+			if(cur == arr_num-1){
+				if(Loop){
+					time -= arr[cur-1].time;
+					cur = 0;
+				}
+				else{
+					time = 0;
+					target = arr[cur-1].value;
+					cur = 0;
+					return;
+				}
+			}
+			if(time < arr[cur+1].time){
+				FLOAT w = (FLOAT)(time - arr[cur].time)/(FLOAT)(arr[cur+1].time - arr[cur].time);
+				return Interpolation(arr[cur].value, arr[cur+1].value, w);
+			}
+			++cur;
+		}
+	}
+};
+
 class ANIMATION{
 public:
 	virtual void update() = 0;

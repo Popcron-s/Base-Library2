@@ -199,7 +199,7 @@ public:
 	private:
 		node* point;
 	public:
-		searcher() : point(m_pRoot){}
+		searcher() : point(nullptr){}
 		searcher(void* p) : point((node*)p){}
 		~searcher(){}
 
