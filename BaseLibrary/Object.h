@@ -82,7 +82,7 @@ private:
 	T& target;
 	struct _node{
 		T value;
-		_GRAPH::INTERPOLATION infor;
+		_GRAPH::INTERPOLATION inter;
 		UINT time;
 	}*arr;
 	const UINT arr_num;
@@ -98,9 +98,15 @@ public:
 		arr[n] = {v,i,t};
 	}
 
-	void Interpolation(T prev, T next, FLOAT weight){
-		target = prev + ((next-prev)*weight);
-		std::cout<< target <<std::endl;
+	void Interpolation(T prev, T next, FLOAT weight, _GRAPH::INTERPOLATION inter){
+		switch(inter){
+		case _GRAPH::POINT:
+			target = prev;
+			return;
+		case _GRAPH::LINEAR:
+			target = prev + ((next-prev)*weight);
+			return;
+		}
 		return;
 	}
 
@@ -110,19 +116,19 @@ public:
 		while(true){
 			if(cur == arr_num-1){
 				if(Loop){
-					time -= arr[cur-1].time;
+					time -= arr[cur].time;
 					cur = 0;
 				}
 				else{
 					time = 0;
-					target = arr[cur-1].value;
+					target = arr[cur].value;
 					cur = 0;
 					return;
 				}
 			}
 			if(time < arr[cur+1].time){
 				FLOAT w = (FLOAT)(time - arr[cur].time)/(FLOAT)(arr[cur+1].time - arr[cur].time);
-				return Interpolation(arr[cur].value, arr[cur+1].value, w);
+				return Interpolation(arr[cur].value, arr[cur+1].value, w, arr[cur].inter);
 			}
 			++cur;
 		}
@@ -130,7 +136,12 @@ public:
 };
 
 class ANIMATION{
+private:
+	//target object
+	//animation clip
+
 public:
+	//void SetWorld(MATRIX4x4 p = p.Initialize());
 	virtual void update() = 0;
 };
 
@@ -154,7 +165,7 @@ private:
 	MATRIX4x4 m_world;
 
 public:
-	void SetWorld(){
+	void SetWorld(MATRIX4x4 p_mat = MATRIX4x4::Initialize()){
 		//scale->rotation->Position
 		MATRIX4x4 t_mat = {
 			1,0,0,0,
@@ -202,7 +213,7 @@ public:
 		MATRIX4x4 r_mat = {};
 		/*if(GetParent() != nullptr){
 			//parent * me
-			MATRIX4x4 p_mat = GetParent()->GetData()->GetWorld();
+			MATRIX4x4 p_mat = GetParent()->GetData()->GetWorld();*/
 
 			r_mat._11 = (t_mat._11 * p_mat._11) + (t_mat._12 * p_mat._21) + (t_mat._13 * p_mat._31) + (t_mat._14 * p_mat._41);
 			r_mat._12 = (t_mat._11 * p_mat._12) + (t_mat._12 * p_mat._22) + (t_mat._13 * p_mat._32) + (t_mat._14 * p_mat._42);
@@ -223,10 +234,10 @@ public:
 			r_mat._42 = (t_mat._41 * p_mat._12) + (t_mat._42 * p_mat._22) + (t_mat._43 * p_mat._32) + (t_mat._44 * p_mat._42);
 			r_mat._43 = (t_mat._41 * p_mat._13) + (t_mat._42 * p_mat._23) + (t_mat._43 * p_mat._33) + (t_mat._44 * p_mat._43);
 			r_mat._44 = (t_mat._41 * p_mat._14) + (t_mat._42 * p_mat._24) + (t_mat._43 * p_mat._34) + (t_mat._44 * p_mat._44);
-		}
-		else{r_mat = t_mat;}
-		m_world = r_mat;*/
-		m_world = t_mat;
+		/*}
+		else{r_mat = t_mat;}*/
+		m_world = r_mat;
+		//m_world = t_mat;
 	}
 	MATRIX4x4 GetWorld(){return m_world;}
 
