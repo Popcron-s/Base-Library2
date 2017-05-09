@@ -89,8 +89,8 @@ void Windows::Run(){
 			TranslateMessage(&m_msg);
 			DispatchMessage(&m_msg);
 		}
-		if(Render != NULL){
-			Render();
+		if(MainLoop != NULL){
+			MainLoop();
 		}
 	}
 }

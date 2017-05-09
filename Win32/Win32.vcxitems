@@ -19,11 +19,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Windows.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)FileLoader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)FileIO.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenGL.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Timer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Win32_API.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Windows.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)WinInput.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)XAudio2.h" />
   </ItemGroup>
 </Project>

@@ -176,13 +176,15 @@ public:
 		iterator(void* p) : point((node*)p){}
 		~iterator(){}
 		void Next(){if(nullptr == point){return;} point = point->next;}
-		T& Data(){return point->data;}
+		//T& Data(){return point->data;}
 
 		void operator =(const void*& p){this->point = p;}
-		void operator ++(){this->point = this->point->next;}
+		void operator ++(){if(nullptr == point){return;} this->point = this->point->next;}
 		//bool operator ==(const void* p){if(this->point == p){return true;} else{return false;}}
 		//bool operator !=(const void* p){if(this->point != p){return true;} else{return false;}}
 		operator void*(){return point;}
+		T& operator *(){return point->data;}
+		T* operator ->(){return &(point->data);}
 	};
 };
 

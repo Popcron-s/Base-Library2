@@ -1,13 +1,13 @@
 #pragma once
 
 namespace _GRAPH{
-	enum TYPE{
+	enum class TYPE{
 		NONE = 0,
 		STOP,
 		PAUSE,
 		PLAY
 	};
-	enum INTERPOLATION{
+	enum class INTERPOLATION{
 		POINT,
 		CLIFF,
 		LINEAR,
@@ -15,7 +15,7 @@ namespace _GRAPH{
 		INVSQURED
 	};
 };
-
+/*
 namespace _OBJECT{
 	enum TYPE{
 		NONE = 0,
@@ -28,7 +28,7 @@ namespace _OBJECT{
 		Animation
 	};
 };
-
+*/
 namespace _COLLISION{
 	enum TYPE{
 		Ignore,
@@ -47,17 +47,13 @@ namespace _PLATFORM{
 }
 
 namespace _INTERFACE{
-	namespace GRAPHIC{
-		enum TYPE{
-			OpenGL,
-			DX9,
-			DX11
-		};
-	}
+	enum class GRAPHIC{
+		OpenGL,
+		DX9,
+		DX11
+	};
 
-	namespace AUDIO{
-		enum TYPE{
-
-		};
-	}
+	enum class SOUND{
+		XAudio2
+	};
 }

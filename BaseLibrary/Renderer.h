@@ -3,6 +3,7 @@
 #include "..\\Common\\Singleton.h"
 #include "..\\Common\\List.h"
 #include "..\\Interface\\Base_Output_Graphics.h"
+#include "..\\Interface\\Base_Output_Sounds.h"
 
 #include "Map.h"
 
@@ -139,35 +140,273 @@ public:
 			0,0,-((2*f*n)/(f-n)),0
 		};
 	}
+	static MATRIX4x4 ReverseViewProjectionMatrix(MATRIX4x4 view, MATRIX4x4 proj){
+		MATRIX4x4 r = {};
+
+		r._11 = (view._11*proj._11)+(view._12*proj._21)+(view._13*proj._31)+(view._14*proj._41);
+		r._12 = (view._11*proj._12)+(view._12*proj._22)+(view._13*proj._32)+(view._14*proj._42);
+		r._13 = (view._11*proj._13)+(view._12*proj._23)+(view._13*proj._33)+(view._14*proj._43);
+		r._14 = (view._11*proj._14)+(view._12*proj._24)+(view._13*proj._34)+(view._14*proj._44);
+
+		r._21 = (view._21*proj._11)+(view._22*proj._21)+(view._23*proj._31)+(view._24*proj._41);
+		r._22 = (view._21*proj._12)+(view._22*proj._22)+(view._23*proj._32)+(view._24*proj._42);
+		r._23 = (view._21*proj._13)+(view._22*proj._23)+(view._23*proj._33)+(view._24*proj._43);
+		r._24 = (view._21*proj._14)+(view._22*proj._24)+(view._23*proj._34)+(view._24*proj._44);
+
+		r._31 = (view._31*proj._11)+(view._32*proj._21)+(view._33*proj._31)+(view._34*proj._41);
+		r._32 = (view._31*proj._12)+(view._32*proj._22)+(view._33*proj._32)+(view._34*proj._42);
+		r._33 = (view._31*proj._13)+(view._32*proj._23)+(view._33*proj._33)+(view._34*proj._43);
+		r._34 = (view._31*proj._14)+(view._32*proj._24)+(view._33*proj._34)+(view._34*proj._44);
+
+		r._41 = (view._41*proj._11)+(view._42*proj._21)+(view._43*proj._31)+(view._44*proj._41);
+		r._42 = (view._41*proj._12)+(view._42*proj._22)+(view._43*proj._32)+(view._44*proj._42);
+		r._43 = (view._41*proj._13)+(view._42*proj._23)+(view._43*proj._33)+(view._44*proj._43);
+		r._44 = (view._41*proj._14)+(view._42*proj._24)+(view._43*proj._34)+(view._44*proj._44);
+
+		FLOAT det = 
+			(r._11*(
+				(r._22*r._33*r._44)-(r._22*r._34*r._43)+
+				(r._23*r._34*r._42)-(r._23*r._32*r._44)+
+				(r._24*r._32*r._43)-(r._24*r._33*r._42)))-
+			(r._12*(
+				(r._23*r._34*r._41)-(r._23*r._31*r._44)+
+				(r._24*r._31*r._43)-(r._24*r._33*r._41)+
+				(r._21*r._33*r._44)-(r._21*r._34*r._43)))+
+			(r._13*(
+				(r._24*r._31*r._42)-(r._24*r._32*r._41)+
+				(r._21*r._32*r._44)-(r._21*r._34*r._42)+
+				(r._22*r._34*r._41)-(r._22*r._31*r._44)))-
+			(r._14*(
+				(r._21*r._32*r._43)-(r._21*r._33*r._42)+
+				(r._22*r._33*r._41)-(r._22*r._31*r._43)+
+				(r._23*r._31*r._42)-(r._23*r._32*r._41)))
+			;
+
+		if(det == 0.0f){return MATRIX4x4::Initialize();}
+
+		MATRIX4x4 adj = {};
+
+		adj._11 = (
+			(r._22*r._33*r._44)-(r._22*r._34*r._43)+
+			(r._23*r._34*r._42)-(r._23*r._32*r._44)+
+			(r._24*r._32*r._43)-(r._24*r._33*r._42));
+		adj._21 = -(
+			(r._21*r._33*r._44)-(r._21*r._34*r._43)+
+			(r._23*r._34*r._41)-(r._23*r._31*r._44)+
+			(r._24*r._31*r._43)-(r._24*r._33*r._41));
+		adj._31 = (
+			(r._21*r._32*r._44)-(r._21*r._34*r._42)+
+			(r._22*r._34*r._41)-(r._22*r._31*r._44)+
+			(r._24*r._31*r._42)-(r._24*r._32*r._41));
+		adj._41 = -(
+			(r._21*r._32*r._43)-(r._21*r._33*r._42)+
+			(r._22*r._33*r._41)-(r._22*r._31*r._43)+
+			(r._23*r._31*r._42)-(r._23*r._32*r._41));
+
+		adj._12 = -(
+			(r._12*r._33*r._44)-(r._12*r._34*r._43)+
+			(r._13*r._34*r._42)-(r._13*r._32*r._44)+
+			(r._14*r._32*r._43)-(r._14*r._33*r._42));
+		adj._22 = (
+			(r._11*r._33*r._44)-(r._11*r._34*r._43)+
+			(r._13*r._34*r._41)-(r._13*r._31*r._44)+
+			(r._14*r._31*r._43)-(r._14*r._33*r._41));
+		adj._32 = -(
+			(r._11*r._32*r._44)-(r._11*r._34*r._42)+
+			(r._12*r._34*r._41)-(r._12*r._31*r._44)+
+			(r._14*r._31*r._42)-(r._14*r._32*r._41));
+		adj._42 = (
+			(r._11*r._32*r._43)-(r._11*r._33*r._42)+
+			(r._12*r._33*r._41)-(r._12*r._31*r._43)+
+			(r._13*r._31*r._42)-(r._13*r._32*r._41));
+
+		adj._13 = (
+			(r._12*r._23*r._44)-(r._12*r._24*r._43)+
+			(r._13*r._24*r._42)-(r._13*r._22*r._44)+
+			(r._14*r._22*r._43)-(r._14*r._23*r._42));
+		adj._23 = -(
+			(r._11*r._23*r._44)-(r._11*r._24*r._43)+
+			(r._13*r._24*r._41)-(r._13*r._21*r._44)+
+			(r._14*r._21*r._43)-(r._14*r._23*r._41));
+		adj._33 = (
+			(r._11*r._22*r._44)-(r._11*r._24*r._42)+
+			(r._12*r._24*r._41)-(r._12*r._21*r._44)+
+			(r._14*r._21*r._42)-(r._14*r._22*r._41));
+		adj._43 = -(
+			(r._11*r._22*r._43)-(r._11*r._23*r._42)+
+			(r._12*r._23*r._41)-(r._12*r._21*r._43)+
+			(r._13*r._21*r._42)-(r._13*r._22*r._41));
+
+		adj._14 = -(
+			(r._12*r._23*r._34)-(r._12*r._24*r._33)+
+			(r._13*r._24*r._32)-(r._13*r._22*r._34)+
+			(r._14*r._22*r._33)-(r._14*r._23*r._32));
+		adj._24 = (
+			(r._11*r._23*r._34)-(r._11*r._24*r._33)+
+			(r._13*r._24*r._31)-(r._13*r._21*r._34)+
+			(r._14*r._21*r._33)-(r._14*r._23*r._31));
+		adj._34 = -(
+			(r._11*r._22*r._34)-(r._11*r._24*r._32)+
+			(r._12*r._24*r._31)-(r._12*r._21*r._34)+
+			(r._14*r._21*r._32)-(r._14*r._22*r._31));
+		adj._44 = (
+			(r._11*r._22*r._33)-(r._11*r._23*r._32)+
+			(r._12*r._23*r._31)-(r._12*r._21*r._33)+
+			(r._13*r._21*r._32)-(r._13*r._22*r._31));
+
+		r._11 = adj._11/det;	r._12 = adj._12/det;	r._13 = adj._13/det;	r._14 = adj._14/det;
+		r._21 = adj._21/det;	r._22 = adj._22/det;	r._23 = adj._23/det;	r._24 = adj._24/det;
+		r._31 = adj._31/det;	r._32 = adj._32/det;	r._33 = adj._33/det;	r._34 = adj._34/det;
+		r._41 = adj._41/det;	r._42 = adj._42/det;	r._43 = adj._43/det;	r._44 = adj._44/det;
+
+		return r;
+	}
+	static MATRIX4x4 ReverseMatrix(MATRIX4x4 r){
+		FLOAT det = 
+			(r._11*(
+			(r._22*r._33*r._44)-(r._22*r._34*r._43)+
+				(r._23*r._34*r._42)-(r._23*r._32*r._44)+
+				(r._24*r._32*r._43)-(r._24*r._33*r._42)))-
+				(r._12*(
+			(r._23*r._34*r._41)-(r._23*r._31*r._44)+
+					(r._24*r._31*r._43)-(r._24*r._33*r._41)+
+					(r._21*r._33*r._44)-(r._21*r._34*r._43)))+
+					(r._13*(
+			(r._24*r._31*r._42)-(r._24*r._32*r._41)+
+						(r._21*r._32*r._44)-(r._21*r._34*r._42)+
+						(r._22*r._34*r._41)-(r._22*r._31*r._44)))-
+						(r._14*(
+			(r._21*r._32*r._43)-(r._21*r._33*r._42)+
+							(r._22*r._33*r._41)-(r._22*r._31*r._43)+
+							(r._23*r._31*r._42)-(r._23*r._32*r._41)))
+			;
+
+		if(det == 0.0f){return MATRIX4x4::Initialize();}
+
+		MATRIX4x4 adj = {};
+
+		adj._11 = (
+			(r._22*r._33*r._44)-(r._22*r._34*r._43)+
+			(r._23*r._34*r._42)-(r._23*r._32*r._44)+
+			(r._24*r._32*r._43)-(r._24*r._33*r._42));
+		adj._21 = -(
+			(r._21*r._33*r._44)-(r._21*r._34*r._43)+
+			(r._23*r._34*r._41)-(r._23*r._31*r._44)+
+			(r._24*r._31*r._43)-(r._24*r._33*r._41));
+		adj._31 = (
+			(r._21*r._32*r._44)-(r._21*r._34*r._42)+
+			(r._22*r._34*r._41)-(r._22*r._31*r._44)+
+			(r._24*r._31*r._42)-(r._24*r._32*r._41));
+		adj._41 = -(
+			(r._21*r._32*r._43)-(r._21*r._33*r._42)+
+			(r._22*r._33*r._41)-(r._22*r._31*r._43)+
+			(r._23*r._31*r._42)-(r._23*r._32*r._41));
+
+		adj._12 = -(
+			(r._12*r._33*r._44)-(r._12*r._34*r._43)+
+			(r._13*r._34*r._42)-(r._13*r._32*r._44)+
+			(r._14*r._32*r._43)-(r._14*r._33*r._42));
+		adj._22 = (
+			(r._11*r._33*r._44)-(r._11*r._34*r._43)+
+			(r._13*r._34*r._41)-(r._13*r._31*r._44)+
+			(r._14*r._31*r._43)-(r._14*r._33*r._41));
+		adj._32 = -(
+			(r._11*r._32*r._44)-(r._11*r._34*r._42)+
+			(r._12*r._34*r._41)-(r._12*r._31*r._44)+
+			(r._14*r._31*r._42)-(r._14*r._32*r._41));
+		adj._42 = (
+			(r._11*r._32*r._43)-(r._11*r._33*r._42)+
+			(r._12*r._33*r._41)-(r._12*r._31*r._43)+
+			(r._13*r._31*r._42)-(r._13*r._32*r._41));
+
+		adj._13 = (
+			(r._12*r._23*r._44)-(r._12*r._24*r._43)+
+			(r._13*r._24*r._42)-(r._13*r._22*r._44)+
+			(r._14*r._22*r._43)-(r._14*r._23*r._42));
+		adj._23 = -(
+			(r._11*r._23*r._44)-(r._11*r._24*r._43)+
+			(r._13*r._24*r._41)-(r._13*r._21*r._44)+
+			(r._14*r._21*r._43)-(r._14*r._23*r._41));
+		adj._33 = (
+			(r._11*r._22*r._44)-(r._11*r._24*r._42)+
+			(r._12*r._24*r._41)-(r._12*r._21*r._44)+
+			(r._14*r._21*r._42)-(r._14*r._22*r._41));
+		adj._43 = -(
+			(r._11*r._22*r._43)-(r._11*r._23*r._42)+
+			(r._12*r._23*r._41)-(r._12*r._21*r._43)+
+			(r._13*r._21*r._42)-(r._13*r._22*r._41));
+
+		adj._14 = -(
+			(r._12*r._23*r._34)-(r._12*r._24*r._33)+
+			(r._13*r._24*r._32)-(r._13*r._22*r._34)+
+			(r._14*r._22*r._33)-(r._14*r._23*r._32));
+		adj._24 = (
+			(r._11*r._23*r._34)-(r._11*r._24*r._33)+
+			(r._13*r._24*r._31)-(r._13*r._21*r._34)+
+			(r._14*r._21*r._33)-(r._14*r._23*r._31));
+		adj._34 = -(
+			(r._11*r._22*r._34)-(r._11*r._24*r._32)+
+			(r._12*r._24*r._31)-(r._12*r._21*r._34)+
+			(r._14*r._21*r._32)-(r._14*r._22*r._31));
+		adj._44 = (
+			(r._11*r._22*r._33)-(r._11*r._23*r._32)+
+			(r._12*r._23*r._31)-(r._12*r._21*r._33)+
+			(r._13*r._21*r._32)-(r._13*r._22*r._31));
+
+		r._11 = adj._11/det;	r._12 = adj._12/det;	r._13 = adj._13/det;	r._14 = adj._14/det;
+		r._21 = adj._21/det;	r._22 = adj._22/det;	r._23 = adj._23/det;	r._24 = adj._24/det;
+		r._31 = adj._31/det;	r._32 = adj._32/det;	r._33 = adj._33/det;	r._34 = adj._34/det;
+		r._41 = adj._41/det;	r._42 = adj._42/det;	r._43 = adj._43/det;	r._44 = adj._44/det;
+
+		return r;
+	}
+	static MATRIX4x4 MultipleMatrix(MATRIX4x4 a, MATRIX4x4 b){
+		MATRIX4x4 m = {};
+		m._11 = (a._11*b._11)+(a._12*b._21)+(a._13*b._31)+(a._14*b._41);
+		m._12 = (a._11*b._12)+(a._12*b._22)+(a._13*b._32)+(a._14*b._42);
+		m._13 = (a._11*b._13)+(a._12*b._23)+(a._13*b._33)+(a._14*b._43);
+		m._14 = (a._11*b._14)+(a._12*b._24)+(a._13*b._34)+(a._14*b._44);
+		m._21 = (a._21*b._11)+(a._22*b._21)+(a._23*b._31)+(a._24*b._41);
+		m._22 = (a._21*b._12)+(a._22*b._22)+(a._23*b._32)+(a._24*b._42);
+		m._23 = (a._21*b._13)+(a._22*b._23)+(a._23*b._33)+(a._24*b._43);
+		m._24 = (a._21*b._14)+(a._22*b._24)+(a._23*b._34)+(a._24*b._44);
+		m._31 = (a._31*b._11)+(a._32*b._21)+(a._33*b._31)+(a._34*b._41);
+		m._32 = (a._31*b._12)+(a._32*b._22)+(a._33*b._32)+(a._34*b._42);
+		m._33 = (a._31*b._13)+(a._32*b._23)+(a._33*b._33)+(a._34*b._43);
+		m._34 = (a._31*b._14)+(a._32*b._24)+(a._33*b._34)+(a._34*b._44);
+		m._41 = (a._41*b._11)+(a._42*b._21)+(a._43*b._31)+(a._44*b._41);
+		m._42 = (a._41*b._12)+(a._42*b._22)+(a._43*b._32)+(a._44*b._42);
+		m._43 = (a._41*b._13)+(a._42*b._23)+(a._43*b._33)+(a._44*b._43);
+		m._44 = (a._41*b._14)+(a._42*b._24)+(a._43*b._34)+(a._44*b._44);
+		return m;
+	}
 	bool ReleaseScreen(UINT num){
 		if(m_Screen.GetNumber() < num){return false;}
 		return m_Screen.ReleaseNode(num);
 	}	//Release Screen
 	
-	void Render(){
-		UINT scr_num = m_Screen.GetNumber();
-		if(scr_num == 0){return;}
-		SCREEN* scr = nullptr;
-		m_Screen.GetArray(&scr);
+	void Render(UINT& tick){
+		List<SCREEN>::iterator iter = m_Screen.Begin();
 		if(_O_Graphics::GetSingleton() != nullptr){
 			_O_Graphics::GetSingleton()->Clear();
-			for(UINT i = 0 ; i<scr_num ; ++i){	//loop for screen num
-				_O_Graphics::GetSingleton()->Start(&(scr[i]));	//start
+			for( ; iter != m_Screen.End() ; ++iter){	//loop for screen num
+				_O_Graphics::GetSingleton()->Start(&(*iter));	//start
 				UINT num = Map::GetSingleton()->GetLayerNumber();
 				for(UINT i = 0 ; i<num ; ++i){
-					Map::GetSingleton()->GetLayer(i).GraphicRender();
+					Map::GetSingleton()->GetLayer(i).GraphicRender(tick);
 				}
 				_O_Graphics::GetSingleton()->End();	//end
 			}
 			_O_Graphics::GetSingleton()->Present();	//present
 		}
-		delete [] scr;
 	}
 };
 
 class Sound_Renderer : public Singleton<Sound_Renderer>{
 public:
-	void Render(){}
+	void Render(){
+		_O_Sounds::GetSingleton()->Run();
+	}
 };
 
 class Renderer : public Singleton<Renderer>{
@@ -183,8 +422,12 @@ public:
 	void Animation(){
 
 	}
-	void Render(){
-		Graphic_Renderer::GetSingleton()->Render();
-		Sound_Renderer::GetSingleton()->Render();
+	void Render(UINT tick){
+		if(Map::GetSingleton()->GetLayerNumber() != 0 && _O_Graphics::GetSingleton() != nullptr){
+			Graphic_Renderer::GetSingleton()->Render(tick);
+		}
+		if(_O_Sounds::GetSingleton() != nullptr){
+			Sound_Renderer::GetSingleton()->Render();
+		}
 	}
 };

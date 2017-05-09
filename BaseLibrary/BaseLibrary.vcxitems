@@ -14,14 +14,20 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Animation.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Collider2D.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Collision2D.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Event.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MainSystem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Map.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Mesh.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Object.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ObjectDecoder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ObjectEncoder.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Renderer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Skeletal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Event.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Map.cpp" />
   </ItemGroup>
 </Project>

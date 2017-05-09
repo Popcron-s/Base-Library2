@@ -4,6 +4,12 @@
     <Filter Include="BMP">
       <UniqueIdentifier>{2a079449-e9c2-43bd-9bff-ae0ae8bb33f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PNG">
+      <UniqueIdentifier>{dce41be1-fa88-4b2e-b4c5-d65ebca8ed0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WAV">
+      <UniqueIdentifier>{5a82d60f-d655-4a86-a855-b2f1761c6e93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)BMPDecoder.h">
@@ -12,5 +18,36 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BMPEncoder.h">
       <Filter>BMP</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)CRC32.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Adler32.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Inflate.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Deflate.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)PNGDecoder.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)PNGEncoder.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ChunkReader.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ChunkWriter.h">
+      <Filter>PNG</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)WAVDecoder.h">
+      <Filter>WAV</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)WAVEncoder.h">
+      <Filter>WAV</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Coder.h" />
   </ItemGroup>
 </Project>

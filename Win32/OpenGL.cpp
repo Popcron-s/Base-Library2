@@ -21,7 +21,7 @@ OpenGL::~OpenGL(){
 	DeleteDC(m_hdc);
 }
 
-_INTERFACE::GRAPHIC::TYPE OpenGL::GetType(){return _INTERFACE::GRAPHIC::OpenGL;}
+_INTERFACE::GRAPHIC OpenGL::GetType(){return _INTERFACE::GRAPHIC::OpenGL;}
 
 bool OpenGL::Init(){
 	PIXELFORMATDESCRIPTOR pfd =                             // 픽셀 포맷 설정 구조체
@@ -70,36 +70,34 @@ bool OpenGL::Start(SCREEN* scr){
 	glViewport(scr->x,scr->y,scr->width,scr->height);
 	GLfloat view_mat[16] = __OPERATOR_MATRIX(scr->view);
 	GLfloat proj_mat[16] = __OPERATOR_MATRIX(scr->proj);
-	
-	glLoadMatrixf(view_mat);
-	glPushMatrix();
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	//glLoadIdentity();
 	glLoadMatrixf(proj_mat);
 	glMatrixMode(GL_MODELVIEW);
+	//glLoadIdentity();
+	glLoadMatrixf(view_mat);
 	return true;
 }
-bool OpenGL::RenderObject(RENDER_OBJECT* r_obj){
-	GLfloat world[16] = __OPERATOR_MATRIX(r_obj->world);
-	glLoadIdentity();
-	glPopMatrix();
+bool OpenGL::RenderObject(RENDER_OBJECT& r_obj){
+	GLfloat world[16] = __OPERATOR_MATRIX(r_obj.world);
 	glPushMatrix();
 	glMultMatrixf(world);
 
-	if(r_obj->material != nullptr){
-		glBindTexture(GL_TEXTURE_2D, (GLuint)r_obj->material);
+	if(r_obj.material != nullptr){
+		glBindTexture(GL_TEXTURE_2D, (GLuint)r_obj.material->diffuse);
 		glEnable(GL_TEXTURE_2D);
 	}
 	else{glDisable(GL_TEXTURE_2D);}
 
 	glBegin(GL_TRIANGLE_STRIP);
-	for(UINT i = 0; i<r_obj->vtx_num ; ++i){
-		glNormal3f(r_obj->vtx[i].normal.x,r_obj->vtx[i].normal.y,r_obj->vtx[i].normal.z);
-		glColor4f(r_obj->vtx[i].diffuse.x, r_obj->vtx[i].diffuse.y, r_obj->vtx[i].diffuse.z, r_obj->vtx[i].diffuse.w);
-		glTexCoord2f(r_obj->vtx[i].tex.x, r_obj->vtx[i].tex.y);
-		glVertex3f(r_obj->vtx[i].pos.x,r_obj->vtx[i].pos.y,r_obj->vtx[i].pos.z);
+	for(UINT i = 0; i<r_obj.vtx_num ; ++i){
+		glNormal3f(r_obj.vtx[i].normal.x,r_obj.vtx[i].normal.y,r_obj.vtx[i].normal.z);
+		glColor4f(r_obj.vtx[i].diffuse.x, r_obj.vtx[i].diffuse.y, r_obj.vtx[i].diffuse.z, r_obj.vtx[i].diffuse.w);
+		glTexCoord2f(r_obj.vtx[i].tex.x, r_obj.vtx[i].tex.y);
+		glVertex3f(r_obj.vtx[i].pos.x,r_obj.vtx[i].pos.y,r_obj.vtx[i].pos.z);
 	}
 	glEnd();
+	glPopMatrix();
 	return true;
 }
 bool OpenGL::End(){
@@ -110,33 +108,39 @@ bool OpenGL::Present(){SwapBuffers(m_hdc); return true;}
 
 bool OpenGL::GetBackBuffer(UINT width, UINT height, UINT* Color){
 	if(Color == nullptr){return false;}
+	UINT* t_c = new UINT[width*height];
 	glReadBuffer(GL_FRONT);
-	glReadPixels(0,0,width,height,GL_RGBA,GL_UNSIGNED_BYTE,Color);
+	glReadPixels(0,0,width,height,GL_RGBA,GL_UNSIGNED_BYTE,t_c);
 	glReadBuffer(GL_BACK);
+	for(UINT h = 0 ; h<height ; ++h){
+		for(UINT w = 0 ; w<width ; ++w){
+			Color[(h*width)+w] = t_c[((height-h-1)*width)+w];
+		}
+	}
 	return true;
 }
 
-void* OpenGL::RegisterTexture(IMAGE* img, void** material){
-	glGenTextures(1, (GLuint*)material);
-	glBindTexture(GL_TEXTURE_2D, (GLuint)*material);
+void* OpenGL::RegistTexture(IMAGE& img, void*& tex){
+	glGenTextures(1, (GLuint*)&tex);
+	glBindTexture(GL_TEXTURE_2D, (GLuint)tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	if(img->alpha_able){
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->width, img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->buf);
+	if(img.alpha_able){
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img.buf);
 	}
 	else
 	{
-		UINT t_size = img->width*img->height*4;
+		UINT t_size = img.width*img.height*4;
 		BYTE* t_buf = new BYTE[t_size];
 		for(UINT i = 0 ; i<t_size ; ++i){
 			if(i%4 == 3){t_buf[i] = 0xFF;}
-			else{t_buf[i] = img->buf[i-(i/4)];}
+			else{t_buf[i] = img.buf[i-(i/4)];}
 		}
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->width, img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, t_buf);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, t_buf);
 		delete [] t_buf;
 	}
-	return *material;
+	return tex;
 }

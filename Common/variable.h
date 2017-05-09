@@ -1,16 +1,23 @@
 #pragma once
 
 #ifdef _M_X64
+typedef __int32				INT16;
+typedef unsigned __int32	UINT16;
 typedef __int64				INT;
 typedef unsigned __int64	UINT;
 typedef double				FLOAT;
 #else
+typedef short				INT16;
+typedef unsigned short		UINT16;
 typedef int					INT;
 typedef unsigned int		UINT;
 typedef float				FLOAT;
 #endif
 
 typedef unsigned char BYTE;
+
+#define DEGREE(r) r*(180.0f/3.141592f)
+#define RADIAN(d) d*(3.141592f/180.0f)
 
 //default
 typedef class FLOAT2{
@@ -119,10 +126,22 @@ struct IMAGE{
 	BYTE* buf;
 };
 
-struct AUDIO{
-
+struct SOUND{
+	UINT16 wFormatTag;         /* format type */
+	UINT16 nChannels;          /* number of channels (i.e. mono, stereo...) */
+	UINT nSamplesPerSec;     /* sample rate */
+	UINT nAvgBytesPerSec;    /* for buffer estimation */
+	UINT16 nBlockAlign;        /* block size of data */
+	UINT16 wBitsPerSample;     /* number of bits per sample of mono data */
+	UINT16 cbSize;             /* the count in bytes of the size of */
+	UINT16 samplerate;
+	UINT size;
+	BYTE* buf;
 };
 
 struct MATERIAL{
-
+	void* diffuse;
+	void* height;
+	void* normal;
+	void* specular;
 };

@@ -2,13 +2,7 @@
 #include "..\\Win32\\Win32_API.h"
 #include "..\\Win32\\Win32_API.cpp"
 
-#include "..\\Coder\\BMPDecoder.h"
-#include "..\\Coder\\BMPEncoder.h"
-
-#include <io.h>
-#include <fcntl.h>
-#include <share.h>
-#include <sys\\stat.h>
+#include "..\\Coder\\Coder.h"
 
 #include "..\\BaseLibrary\\MainSystem.h"
 #include "..\\BaseLibrary\\Map.h"
@@ -16,206 +10,317 @@
 
 #include "..\\Common\\Tree.h"
 
-class test_obj : public OBJECT{
+#include "..\\BaseLibrary\\Collision2D.h"
+
+class testWalker : public OBJECT{
 private:
-	_Graph* ani[8];
-	void* pointer[4];
 
 public:
-	test_obj(){
+	testWalker(){
 		Map::GetSingleton()->RegistObject(this, 0);
 
-		SetPosition({0.0f, 0.0f, 0.0f});
-		SetRotation({0.0f, 0.0f, 0.0f});
-		SetScale({1.0f, 1.0f, 1.0f});
-		SetWorld();
-		
-		SetSkeletal(new SKELETAL);
-		WLTree<JOINT>& t_skel = GetSkeletal()->skeletal;
+		//SetPosition({1.0f, 2.0f, 3.0f});
 
-		JOINT temp = {};
-		temp.pos = {3.0f, 0.0f, 0.0f};
-		temp.rot = {0.0f, 0.0f, 0.0f};
-		temp.scl = {0.6f, 1.0f, 1.0f};
-		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, GetWorld());
-		temp.mesh.vtx = new VERTEX[4];
-		temp.mesh.vtx[0] = {{-1.0f, -1.0f, 0.0f},{0.0f, 1.0f, 1.0f, 1.0f},{},{0.0f, 0.0f}};
-		temp.mesh.vtx[1] = {{ 1.0f, -1.0f, 0.0f},{1.0f, 0.0f, 1.0f, 1.0f},{},{1.0f, 0.0f}};
-		temp.mesh.vtx[2] = {{-1.0f,  1.0f, 0.0f},{1.0f, 1.0f, 0.0f, 1.0f},{},{0.0f, 1.0f}};
-		temp.mesh.vtx[3] = {{ 1.0f,  1.0f, 0.0f},{1.0f, 1.0f, 1.0f, 1.0f},{},{1.0f, 1.0f}};
-		temp.mesh.vtx_num = 4;
+		JOINT t_joint = {
+			JOINT_NAME::NONE, 
+			{10.0f, 22.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {10.0f, 10.0f, 1.0f}, 
+			MATRIX4x4::Initialize()
+		};
 
-		t_skel.CreateRoot(temp);
+		GetSkeletal().CreateRoot(t_joint);
 
-		WLTree<JOINT>::searcher scr = t_skel.Begin();
+		Tree<JOINT>::searcher scr = GetSkeletal().Begin();
 
-		temp.pos = { 1.0f,-0.5f, 0.0f};
-		temp.rot = { 0.0f, 0.0f, 0.0f};
-		temp.scl = { 0.3f, 0.5f, 1.0f};
-		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
-		t_skel.Create(scr, LEFT, temp);
-		
-		temp.pos = {-1.0f,-0.5f, 0.0f};
-		temp.rot = { 0.0f, 0.0f, 0.0f};
-		temp.scl = { 0.3f, 0.5f, 1.0f};
-		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
-		t_skel.Create(scr, RIGHT, temp);
+		MESH t_mesh = {&(*scr), new VERTEX[4], 4, nullptr, nullptr};
+		t_mesh.vtx[0] = {{-1.0f, -1.0f, 0.0f},{1.0f, 0.0f, 0.0f, 1.0f},{},{0.0f, 0.0f}};
+		t_mesh.vtx[1] = {{ 1.0f, -1.0f, 0.0f},{1.0f, 0.0f, 0.0f, 1.0f},{},{1.0f, 0.0f}};
+		t_mesh.vtx[2] = {{-1.0f,  1.0f, 0.0f},{1.0f, 0.0f, 0.0f, 1.0f},{},{0.0f, 1.0f}};
+		t_mesh.vtx[3] = {{ 1.0f,  1.0f, 0.0f},{1.0f, 0.0f, 0.0f, 1.0f},{},{1.0f, 1.0f}};
 
-		scr.Left(0);
+		GetMesh().CreateNode(t_mesh);
 
-		temp.pos = {0.0f, 2.0f, 0.0f};
-		temp.rot = {0.0f, 0.0f, 0.0f};
-		temp.scl = {1.0f, 1.0f, 1.0f};
-		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
-		t_skel.Create(scr, LEFT, temp);
-
-		scr.Prev(); scr.Right(0);
-
-		temp.pos = {0.0f, 2.0f, 0.0f};
-		temp.rot = {0.0f, 0.0f, 0.0f};
-		temp.scl = {1.0f, 1.0f, 1.0f};
-		temp.world = Graphic_Renderer::SetWorldMatrix(temp.pos, temp.rot, temp.scl, scr.Data().world);
-		t_skel.Create(scr, LEFT, temp);
-
-		scr = t_skel.Begin();
-		scr.Left(0);
-		ani[0] = new _Graph_template<FLOAT>(scr.Data().rot.z,5);	//LU	//-15~30
-		pointer[0] = scr;
-		scr.Left(0);
-		ani[1] = new _Graph_template<FLOAT>(scr.Data().rot.z,3);	//LD	//0~15
-		pointer[1] = scr;
-		scr.Prev(); scr.Prev(); scr.Right(0);
-		ani[2] = new _Graph_template<FLOAT>(scr.Data().rot.z,5);	//RU	//-15~30
-		pointer[2] = scr;
-		scr.Left(0);
-		ani[3] = new _Graph_template<FLOAT>(scr.Data().rot.z,3);	//RD	//0~15
-		pointer[3] = scr;
-
-		_Graph_template<FLOAT>* t_ani = (_Graph_template<FLOAT>*)(ani[0]);
-		t_ani->SetNode(0, (3.141592f*(-15.0f))/180.0f, _GRAPH::LINEAR,    0);
-		t_ani->SetNode(1,							0, _GRAPH::LINEAR,  200);
-		t_ani->SetNode(2, (3.141592f*( 45.0f))/180.0f, _GRAPH::LINEAR,  800);
-		t_ani->SetNode(3,							0, _GRAPH::LINEAR, 1400);
-		t_ani->SetNode(4, (3.141592f*(-15.0f))/180.0f, _GRAPH::LINEAR, 1600);
-		t_ani->SetLoop(true);
-		t_ani->Play();
-
-		t_ani = (_Graph_template<FLOAT>*)(ani[1]);
-		t_ani->SetNode(0,							0, _GRAPH::LINEAR,    0);
-		t_ani->SetNode(1, (3.141592f*( 15.0f))/180.0f, _GRAPH::LINEAR,  800);
-		t_ani->SetNode(2,							0, _GRAPH::LINEAR, 1600);
-		t_ani->SetLoop(true);
-		t_ani->Play();
-
-		t_ani = (_Graph_template<FLOAT>*)(ani[2]);
-		t_ani->SetNode(0, (3.141592f*( 45.0f))/180.0f, _GRAPH::LINEAR,    0);
-		t_ani->SetNode(1,							0, _GRAPH::LINEAR,  600);
-		t_ani->SetNode(2, (3.141592f*(-15.0f))/180.0f, _GRAPH::LINEAR,  800);
-		t_ani->SetNode(3,							0, _GRAPH::LINEAR, 1000);
-		t_ani->SetNode(4, (3.141592f*( 45.0f))/180.0f, _GRAPH::LINEAR, 1600);
-		t_ani->SetLoop(true);
-		t_ani->Play();
-
-		t_ani = (_Graph_template<FLOAT>*)(ani[3]);
-		t_ani->SetNode(0, (3.141592f*( 15.0f))/180.0f, _GRAPH::LINEAR,    0);
-		t_ani->SetNode(1,							0, _GRAPH::LINEAR,  800);
-		t_ani->SetNode(2, (3.141592f*( 15.0f))/180.0f, _GRAPH::LINEAR, 1600);
-		t_ani->SetLoop(true);
-		t_ani->Play();
-
-		SetMesh(new MESH);
-		MESH& t_mesh = *(GetMesh());
-		t_mesh.vtx = new VERTEX[4];
-		t_mesh.vtx_num = 4;
-		t_mesh.vtx[0] = {{-1.0f, -1.0f, 0.0f},{0.0f, 1.0f, 1.0f, 1.0f},{},{0.0f, 0.0f}};
-		t_mesh.vtx[1] = {{ 1.0f, -1.0f, 0.0f},{1.0f, 0.0f, 1.0f, 1.0f},{},{1.0f, 0.0f}};
-		t_mesh.vtx[2] = {{-1.0f,  1.0f, 0.0f},{1.0f, 1.0f, 0.0f, 1.0f},{},{0.0f, 1.0f}};
-		t_mesh.vtx[3] = {{ 1.0f,  1.0f, 0.0f},{1.0f, 1.0f, 1.0f, 1.0f},{},{1.0f, 1.0f}};
-		t_mesh.indexed = nullptr;
-		t_mesh.material = nullptr;
-
-		IMAGE img = {};
-		UINT size = 0;
-		BYTE* buf = nullptr;
-		_FileLoader::GetSingleton()->FileLoader("sprites_sample.bmp", &size, &buf);
-		BMPDecoder(buf, size, &img);
-		_O_Graphics::GetSingleton()->RegisterTexture(&img, (void**)&(t_mesh.material));
-
-		_Graph_template<VECTOR2>* t_ani2 = nullptr;
-		ani[4] = new _Graph_template<VECTOR2>(t_mesh.vtx[0].tex, 5);
-		t_ani2 = (_Graph_template<VECTOR2>*)(ani[4]);
-		t_ani2->SetNode(0, {0.00f, 0.0f}, _GRAPH::POINT,   0);
-		t_ani2->SetNode(1, {0.25f, 0.0f}, _GRAPH::POINT, 150);
-		t_ani2->SetNode(2, {0.50f, 0.0f}, _GRAPH::POINT, 300);
-		t_ani2->SetNode(3, {0.75f, 0.0f}, _GRAPH::POINT, 450);
-		t_ani2->SetNode(4, {0.00f, 0.0f}, _GRAPH::POINT, 600);
-		t_ani2->SetLoop(true);
-		t_ani2->Play();
-
-		ani[5] = new _Graph_template<VECTOR2>(t_mesh.vtx[1].tex, 5);
-		t_ani2 = (_Graph_template<VECTOR2>*)(ani[5]);
-		t_ani2->SetNode(0, {0.25f, 0.0f}, _GRAPH::POINT,   0);
-		t_ani2->SetNode(1, {0.50f, 0.0f}, _GRAPH::POINT, 150);
-		t_ani2->SetNode(2, {0.75f, 0.0f}, _GRAPH::POINT, 300);
-		t_ani2->SetNode(3, {1.00f, 0.0f}, _GRAPH::POINT, 450);
-		t_ani2->SetNode(4, {0.00f, 0.0f}, _GRAPH::POINT, 600);
-		t_ani2->SetLoop(true);
-		t_ani2->Play();
-
-		ani[6] = new _Graph_template<VECTOR2>(t_mesh.vtx[2].tex, 5);
-		t_ani2 = (_Graph_template<VECTOR2>*)(ani[6]);
-		t_ani2->SetNode(0, {0.00f, 1.0f}, _GRAPH::POINT,   0);
-		t_ani2->SetNode(1, {0.25f, 1.0f}, _GRAPH::POINT, 150);
-		t_ani2->SetNode(2, {0.50f, 1.0f}, _GRAPH::POINT, 300);
-		t_ani2->SetNode(3, {0.75f, 1.0f}, _GRAPH::POINT, 450);
-		t_ani2->SetNode(4, {0.00f, 1.0f}, _GRAPH::POINT, 600);
-		t_ani2->SetLoop(true);
-		t_ani2->Play();
-
-		ani[7] = new _Graph_template<VECTOR2>(t_mesh.vtx[3].tex, 5);
-		t_ani2 = (_Graph_template<VECTOR2>*)(ani[7]);
-		t_ani2->SetNode(0, {0.25f, 1.0f}, _GRAPH::POINT,   0);
-		t_ani2->SetNode(1, {0.50f, 1.0f}, _GRAPH::POINT, 150);
-		t_ani2->SetNode(2, {0.75f, 1.0f}, _GRAPH::POINT, 300);
-		t_ani2->SetNode(3, {1.00f, 1.0f}, _GRAPH::POINT, 450);
-		t_ani2->SetNode(4, {0.00f, 1.0f}, _GRAPH::POINT, 600);
-		t_ani2->SetLoop(true);
-		t_ani2->Play();
+		BOX* t_col = new BOX;
+		t_col->joint = &(*scr);
+		t_col->_1 = {-1.0f, -1.0f, 0.0f};
+		t_col->_2 = { 1.0f, -1.0f, 0.0f};
+		t_col->_3 = { 1.0f,  1.0f, 0.0f};
+		t_col->_4 = {-1.0f,  1.0f, 0.0f};
+		GetCollider2D().CreateNode(t_col);
 	}
-	~test_obj(){Map::GetSingleton()->GetLayer(0).RemoveObject(this);}
+	~testWalker(){}
+
 	void update(){
-		WLTree<JOINT>::searcher scr;
-		for(UINT i = 0 ; i<4 ; ++i){
-			(ani[i])->update(MainSystem::GetSingleton()->GetTick());
-			scr = pointer[i];
-			scr.Prev();
-			MATRIX4x4 p = scr.Data().world;
-			scr = pointer[i];
-			scr.Data().world = Graphic_Renderer::SetWorldMatrix(scr.Data().pos, scr.Data().rot, scr.Data().scl, p);
+		BOX target_box = {};
+		target_box.joint = nullptr;
+		target_box._1 = {-100.0f, -10.0f, 0.0f};
+		target_box._2 = { 100.0f, -10.0f, 0.0f};
+		target_box._3 = { 100.0f,  10.0f, 0.0f};
+		target_box._4 = {-100.0f,  10.0f, 0.0f};
+
+		if(Collision2D::GetSingleton()->Collision(*(GetCollider2D().GetData(0)), target_box)){
+			GetMesh().GetData(0).vtx[0].diffuse.x = 0.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.x = 0.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.x = 0.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.x = 0.0f;
+
+			GetMesh().GetData(0).vtx[0].diffuse.y = 1.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.y = 1.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.y = 1.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.y = 1.0f;
 		}
-		for(UINT i = 4 ; i<8 ; ++i){
-			(ani[i])->update(MainSystem::GetSingleton()->GetTick());
+		else{
+			GetMesh().GetData(0).vtx[0].diffuse.y = 0.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.y = 0.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.y = 0.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.y = 0.0f;
+
+			GetMesh().GetData(0).vtx[0].diffuse.x = 1.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.x = 1.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.x = 1.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.x = 1.0f;
+		}
+
+		Tree<JOINT>::searcher scr = GetSkeletal().Begin();
+		FLOAT3& pos = scr->pos;
+		FLOAT3& rot = scr->rot;
+		/*if(MainSystem::GetSingleton()->GetKeyboard()->KEY['W'] & 0x81){pos.y-=1.0f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['S'] & 0x81){pos.y+=1.0f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['A'] & 0x81){pos.x-=1.0f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['D'] & 0x81){pos.x+=1.0f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['Q'] & 0x81){rot.z+=1.0f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['E'] & 0x81){rot.z-=1.0f;}*/
+		FLOAT f = DEGREE(rot.z);
+		if(f > 360.0f){f = 0.0f;}
+		else{f += 1.0f;}
+		rot.z = RADIAN(f);
+		//SetPosition(pos);
+		//SetRotation(rot);
+
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY[VK_SPACE] & 0x81){
+			SetPosition({});
+			SetRotation({});
 		}
 	}
 };
 
+class Selecter : public OBJECT{
+private:
+	MESH* s_mesh;
+public:
+	Selecter(){
+		Map::GetSingleton()->RegistObject(this, 0);
+
+		SetPosition({0.0f, 0.0f, 0.0f});
+
+		JOINT t_joint = {
+			JOINT_NAME::NONE, 
+			{0.0f, 0.0f, 10.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, 
+			MATRIX4x4::Initialize()
+		};
+
+		GetSkeletal().CreateRoot(t_joint);
+
+		Tree<JOINT>::searcher scr = GetSkeletal().Begin();
+
+		GetSkeletal().Create(scr, t_joint);
+
+		MESH t_mesh = {&(*scr), new VERTEX[4], 4, nullptr, nullptr};
+		t_mesh.vtx[0] = {{-10.0f, -10.0f, 0.0f},{0.0f, 1.0f, 0.0f, 1.0f},{},{0.0f, 0.0f}};
+		t_mesh.vtx[1] = {{ 10.0f, -10.0f, 0.0f},{0.0f, 1.0f, 0.0f, 1.0f},{},{1.0f, 0.0f}};
+		t_mesh.vtx[2] = {{-10.0f,  10.0f, 0.0f},{0.0f, 1.0f, 0.0f, 1.0f},{},{0.0f, 1.0f}};
+		t_mesh.vtx[3] = {{ 10.0f,  10.0f, 0.0f},{0.0f, 1.0f, 0.0f, 1.0f},{},{1.0f, 1.0f}};
+		GetMesh().CreateNode(t_mesh);
+
+		BOX* t_col = new BOX;
+		t_col->joint = &(*scr);
+		t_col->_1 = {-10.0f, -10.0f, 0.0f};
+		t_col->_2 = { 10.0f, -10.0f, 0.0f};
+		t_col->_3 = { 10.0f,  10.0f, 0.0f};
+		t_col->_4 = {-10.0f,  10.0f, 0.0f};
+		GetCollider2D().CreateNode((BOX*)t_col);
+	}
+	~Selecter(){
+		
+	}
+
+	void update(){
+		BOX& t_col = (BOX&)*(GetCollider2D().GetData(0));
+		UINT x = MainSystem::GetSingleton()->GetMouse()->x;
+		UINT y = MainSystem::GetSingleton()->GetMouse()->y;
+		FLOAT2 v = MainSystem::GetSingleton()->ClickOrtho(x,y);
+		//std::cout<< v.x << " / " << v.y <<std::endl;
+		if(Collision2D::GetSingleton()->Raycast(v.x, v.y, t_col)){
+			GetMesh().GetData(0).vtx[0].diffuse.y = 1.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.y = 1.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.y = 1.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.y = 1.0f;
+
+			GetMesh().GetData(0).vtx[0].diffuse.x = 0.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.x = 0.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.x = 0.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.x = 0.0f;
+		}
+		else{
+			GetMesh().GetData(0).vtx[0].diffuse.x = 1.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.x = 1.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.x = 1.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.x = 1.0f;
+
+			GetMesh().GetData(0).vtx[0].diffuse.y = 0.0f;
+			GetMesh().GetData(0).vtx[1].diffuse.y = 0.0f;
+			GetMesh().GetData(0).vtx[2].diffuse.y = 0.0f;
+			GetMesh().GetData(0).vtx[3].diffuse.y = 0.0f;
+		}
+	}
+};
+
+class FPS : public OBJECT{
+private:
+	//SCREEN* s;
+	FLOAT pos_x;
+	FLOAT pos_y;
+
+	SOUND s1;
+
+public:
+	FPS(){
+		Map::GetSingleton()->RegistObject(this, 0);
+		//s = Graphic_Renderer::GetSingleton()->GetScreen(0);
+		pos_x = 0.0f; pos_y = 0.0f;
+		SCREEN* s = Graphic_Renderer::GetSingleton()->GetScreen(0);
+		s->view = Graphic_Renderer::SetViewMatrix({pos_x, pos_y, -10.0f},{pos_x, pos_y, 0.0f},{0.0f, -1.0f, 0.0f});
+
+		JOINT t_joint = {
+			JOINT_NAME::NONE, 
+			{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 
+			MATRIX4x4::Initialize()
+		};
+
+		GetSkeletal().CreateRoot(t_joint);
+
+		Tree<JOINT>::searcher scr = GetSkeletal().Begin();
+
+		MESH t_mesh = {&(*scr), new VERTEX[4], 4, nullptr, nullptr};
+		t_mesh.vtx[0] = {{-100.0f, -10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{0.0f, 0.0f}};
+		t_mesh.vtx[1] = {{ 100.0f, -10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{1.0f, 0.0f}};
+		t_mesh.vtx[2] = {{-100.0f,  10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{0.0f, 1.0f}};
+		t_mesh.vtx[3] = {{ 100.0f,  10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{1.0f, 1.0f}};
+
+		GetMesh().CreateNode(t_mesh);
+
+		GetSkeletal().Create(scr, t_joint);
+		scr.Child(0);
+		t_mesh.joint = &(*scr);
+		t_mesh.vtx = new VERTEX[4];
+		t_mesh.vtx[0] = {{-10.0f, -10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{0.0f, 0.0f}};
+		t_mesh.vtx[1] = {{ 10.0f, -10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{1.0f, 0.0f}};
+		t_mesh.vtx[2] = {{-10.0f,  10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{0.0f, 1.0f}};
+		t_mesh.vtx[3] = {{ 10.0f,  10.0f, 0.0f},{1.0f, 1.0f, 1.0f, 0.5f},{},{1.0f, 1.0f}};
+
+		GetMesh().CreateNode(t_mesh);
+		
+		CreateAnimation(1);
+		GetAnimation()[0] = new _Graph_function<FPS>(this, 1);
+		((_Graph_function<FPS>*)GetAnimation()[0])->SetNode(0, &FPS::sound, 4000);
+		GetAnimation()[0]->SetAuto(true);
+		GetAnimation()[0]->SetLoop(true);
+		/*
+		void (FPS::*func)() = nullptr;
+
+		func = &FPS::sound;
+		(this->*func)();*/
+
+		BYTE* buf = nullptr;
+		UINT buf_size = 0;
+		_FileIO::GetSingleton()->FileRead("Alert.wav", buf_size, buf);
+		WAVDecoder(buf, buf_size, s1);
+		delete [] buf;
+	}
+	~FPS(){Map::GetSingleton()->RemoveObject(this, 0);}
+
+	void sound(){
+		std::cout<< MainSystem::GetSingleton()->GetTick() << " : act function" <<std::endl;
+		_O_Sounds::GetSingleton()->RegistGraph(s1);
+	}
+
+	void update(){
+		UINT frame = 0;
+		if(MainSystem::GetSingleton()->GetTick() != 0){
+			frame = 1000/MainSystem::GetSingleton()->GetTick();
+		}
+		//std::cout<< frame << "f/s" <<std::endl;
+
+		if(MainSystem::GetSingleton()->GetMouse()->button[0] & 0x81){
+			INT x = MainSystem::GetSingleton()->GetMouse()->x;
+			INT y = MainSystem::GetSingleton()->GetMouse()->y;
+
+			FLOAT2 t = {};/*
+			for(UINT z = 0 ; z<10000 ; ++z){
+				if(t.z <= 0.0f){std::cout<< z <<std::endl; break;}
+			}*/
+			t = MainSystem::GetSingleton()->ClickOrtho(x, y);
+			//std::cout<< t.x << " / " << t.y <<std::endl;
+			/*
+			GetMesh().GetData(1).vtx[0].pos = {t.x-5.0f, t.y-5.0f, 0.0f};
+			GetMesh().GetData(1).vtx[1].pos = {t.x+5.0f, t.y-5.0f, 0.0f};
+			GetMesh().GetData(1).vtx[2].pos = {t.x-5.0f, t.y+5.0f, 0.0f};
+			GetMesh().GetData(1).vtx[3].pos = {t.x+5.0f, t.y+5.0f, 0.0f};*/
+			SKEL_SEARCHER(scr);
+			scr.Child(0);
+			scr->pos = {t.x, t.y, 0.0f};
+		}
+
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY[VK_NUMPAD1] == 0x81){
+			SOUND s = {};
+			BYTE* buf = nullptr;
+			UINT buf_size = 0;
+			_FileIO::GetSingleton()->FileRead("Alert.wav", buf_size, buf);
+			WAVDecoder(buf, buf_size, s);
+			delete [] buf;
+
+			_O_Sounds::GetSingleton()->RegistGraph(s,1);
+		}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY[VK_NUMPAD2] == 0x81){
+			SOUND s = {};
+			BYTE* buf = nullptr;
+			UINT buf_size = 0;
+			_FileIO::GetSingleton()->FileRead("test_bgm2.wav", buf_size, buf);
+			WAVDecoder(buf, buf_size, s);
+			delete [] buf;
+
+			_O_Sounds::GetSingleton()->RegistGraph(s);
+		}
+
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['W'] & 0x81){pos_y -= 0.5f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['S'] & 0x81){pos_y += 0.5f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['A'] & 0x81){pos_x -= 0.5f;}
+		if(MainSystem::GetSingleton()->GetKeyboard()->KEY['D'] & 0x81){pos_x += 0.5f;}
+		Graphic_Renderer::GetSingleton()->GetScreen(0)->view = Graphic_Renderer::SetViewMatrix({pos_x, pos_y, -10.0f},{pos_x, pos_y, 0.0f},{0.0f, -1.0f, 0.0f});
+	}
+};
+
 void main(){
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	HINSTANCE hInst=GetModuleHandle(NULL);
 	int CmdShow = SW_SHOW;
 	WindowCreate(hInst, L"Console In Test", &CmdShow);
 	Init(_INTERFACE::GRAPHIC::OpenGL);
-
-	Graphic_Renderer::SetOrthoProjectionMatrix(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+	MainSystem::GetSingleton()->SetScreen(1280, 720);
 	Graphic_Renderer::GetSingleton()->CreateScreen(
 		{0,0,1280,720,
 		Graphic_Renderer::SetViewMatrix({0.0f, 0.0f, -10.0f},{0.0f, 0.0f, 0.0f},{0.0f, -1.0f, 0.0f}),
-		Graphic_Renderer::SetPerspectiveProjectionMatrix(1280.0f/720.0f, 3.141592f/4.0f, 1.0f, 10000.0f)});
+		Graphic_Renderer::SetOrthoProjectionMatrix(-640.0f, 640.0f, -360.0f, 360.0f, -50.0f, 50.0f)
+		//Graphic_Renderer::SetPerspectiveProjectionMatrix(1280.0f/720.0f, 3.141592f/4.0f, 1.0f, 10000.0f)
+	});
 	Map::GetSingleton()->CreateLayer(1);
 
-	test_obj test;
+	testWalker test;
+	FPS fps;
+	Selecter sel;
 
-	MainLoop(&(MainSystem::Render));
-	Render();
+	MainLoop(&(MainSystem::MainLoop));
+	Run();
 
+	CoUninitialize();
 	return;
 }

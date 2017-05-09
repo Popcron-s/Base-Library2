@@ -48,5 +48,5 @@ public:
 		}
 		return true;
 	}
-	void (*Render)();
+	void (*MainLoop)();
 };

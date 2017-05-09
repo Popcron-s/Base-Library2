@@ -18,15 +18,15 @@ public:
 	//void Init();
 	//HDC GetBackBuffer();
 
-	_INTERFACE::GRAPHIC::TYPE GetType();
+	_INTERFACE::GRAPHIC GetType();
 
 	bool Init();
 	bool Clear();
 	bool Start(SCREEN*);
-	bool RenderObject(RENDER_OBJECT*);
+	bool RenderObject(RENDER_OBJECT&);
 	bool End();
 	bool Present();
 
-	void* RegisterTexture(IMAGE*, void** material);
+	void* RegistTexture(IMAGE&, void*& material);
 	bool GetBackBuffer(UINT width, UINT height, UINT* Color);
 };

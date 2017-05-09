@@ -2,12 +2,155 @@
 
 #include "variable.h"
 #include "List.h"
-
 #include <iostream>
-
 enum DIR{
 	LEFT = 0,
 	RIGHT = 1
+};
+
+template <class T>
+class Tree{
+private:
+	struct _node{
+		T m_Data;
+
+		UINT m_Level;
+		_node* m_pParent;
+		List<_node*> m_Child;
+	}*m_pRoot;
+	UINT m_Number;
+
+public:
+	Tree() : m_pRoot(nullptr), m_Number(0){}
+	~Tree(){Release(m_pRoot);}
+
+	UINT GetNumber(){return m_Number;}
+
+	bool CreateRoot(T data){
+		if(m_pRoot != nullptr){return false;}
+		m_pRoot = new _node;
+		m_pRoot->m_Data = data;
+		m_pRoot->m_Level = 0;
+		m_pRoot->m_pParent = nullptr;
+		m_Number = 1;
+		return true;
+	}
+	bool Create(void* prnt, T data){
+		if(prnt == nullptr){return false;}
+		_node* p_node = (_node*)prnt;
+		_node* c_node = new _node;
+		c_node->m_Data = data;
+		c_node->m_Level = p_node->m_Level+1;
+		c_node->m_pParent = p_node;
+		p_node->m_Child.CreateNode(c_node);
+		++m_Number;
+		return true;
+	}
+	bool Create(void* prnt, T data, UINT num){
+		if(prnt == nullptr){return false;}
+		_node* p_node = (_node*)prnt;
+		_node* c_node = new _node;
+		c_node->m_Data = data;
+		c_node->m_Level = p_node->m_Level+1;
+		c_node->m_pParent = p_node;
+		p_node->m_Child.CreateNode(c_node, num);
+		++m_Number;
+		return true;
+	}
+	bool Release(void* crnt){
+		if(crnt == nullptr){return false;}
+		_node* t = (_node*)crnt;
+		while(t->m_Child.GetNumber() != 0){
+			Release(t->m_Child.GetData(0));
+		}
+		t->m_Child.AllReleaseNode();
+		if(t->m_pParent != nullptr){
+			_node* p = t->m_pParent;
+			p->m_Child.ReleaseNode(t);
+			delete t;
+			--m_Number;
+		}
+		else{
+			delete m_pRoot;
+			m_pRoot = nullptr;
+			m_Number = 0;
+		}
+		return true;
+	}
+	bool Release(void* prnt, UINT num){
+		_node* t = (_node*)prnt;
+		return Release(prnt->m_Child.GetData(num));
+	}
+	bool AllRelease(){
+		return Release(m_pRoot);
+	}
+
+	void* Begin(){return m_pRoot;}
+
+	class iterator{
+	private:
+		_node* point;
+		List<_node*> stack;
+
+	public:
+		iterator() : point(nullptr){}
+		iterator(void* p) : point(nullptr){
+			stack.AllReleaseNode(); 
+			//stack.CreateNode((_node*)p);
+			point = (_node*)p;
+			List<_node*>::iterator iter = point->m_Child.Begin();
+			for( ; iter != point->m_Child.End() ; ++iter){
+				stack.CreateNode(*iter);
+			}
+		}
+		~iterator(){stack.AllReleaseNode();}
+
+		bool isLast(){if(stack.GetNumber() == 0 && point == nullptr){return true;} else{return false;}}
+
+		void operator ++(){
+			if(stack.GetNumber() == 0){
+				point = nullptr;
+				return;
+			}
+			point = stack.GetData(0);
+			stack.ReleaseNode((UINT)0);
+			List<_node*>::iterator iter = point->m_Child.Begin();
+			for( ; iter != point->m_Child.End() ; ++iter){
+				stack.CreateNode(*iter);
+			}
+		}
+		//bool operator ==(const void* p){if(this->point == p){return true;} else{return false;}}
+		//bool operator !=(const void* p){if(this->point != p){return true;} else{return false;}}
+		operator void*(){return point;}
+		T& operator *(){return point->m_Data;}
+		T* operator ->(){return &(point->m_Data);}
+	};
+
+	class searcher{
+	private:
+		_node* point;
+	public:
+		searcher() : point(nullptr){}
+		searcher(void* p) : point((_node*)p){}
+		~searcher(){}
+
+		//T& Data(){return point->m_Data;}
+		UINT GetLevel(){return point->m_Level;}
+		UINT GetChildNum(){return point->m_Child->GetNumber();}
+
+		T& GetParent(){return point->m_pParent->m_Data;}
+		T& GetChild(UINT num){return point->m_Child->GetData(num)->m_Data;}
+
+		void Parent(){if(point->m_pParent != nullptr){point = point->m_pParent;}}
+		void Child(UINT num){if(point->m_Child.GetNumber() != 0){point = point->m_Child.GetData(num);}}
+		
+		void operator =(const void*& p){this->point = p;}
+		bool operator ==(const void* p){if(this->point == p){return true;} else{return false;}}
+		bool operator !=(const void* p){if(this->point != p){return true;} else{return false;}}
+		operator void*(){return point;}
+		T& operator *(){return point->m_Data;}
+		T* operator ->(){return &(point->m_Data);}
+	};
 };
 
 template <class T>
@@ -64,154 +207,3 @@ public:
 		return idx;
 	}	//LRV
 };
-
-template <class T>
-class WLTree{
-protected:
-	struct node{
-		T m_Data;
-
-		node* m_pParent;
-		List<node*> m_Child[2];
-	}*m_pRoot;
-	UINT m_Number;
-
-public:
-
-public:
-	WLTree() : m_pRoot(nullptr), m_Number(0){}
-	~WLTree(){Release(m_pRoot);}
-
-	UINT GetNumber(){return m_Number;}
-
-	bool CreateRoot(T data){
-		if(m_pRoot != nullptr){return false;}
-		m_pRoot = new node;
-		m_pRoot->m_Data = data;
-		m_pRoot->m_pParent = nullptr;
-
-		m_Number = 1;
-	}
-	bool Create(void* prnt, DIR dir, T data, INT num = -1){
-		if(prnt == nullptr){return false;}
-		node* p_node = (node*)prnt;
-		node* c_node = new node;
-		c_node->m_Data = data;
-		c_node->m_pParent = p_node;
-		if(num == -1){p_node->m_Child[dir].CreateNode(c_node);}
-		else{p_node->m_Child[dir].CreateNode(c_node, num);}
-		++m_Number;
-		return true;
-	}
-	bool Release(void* crnt){return false;}
-	bool Release(void* prnt, DIR dir, UINT num){return false;}
-
-	void* Begin(){return m_pRoot;}
-	
-	class iterator{
-	private:
-		node* point;
-		enum{
-			Pre,	//VLR
-			In,		//LVR
-			Post,	//LRV
-			Level
-		}order;
-		List<node*> stack;
-
-	public:
-		iterator() : point(nullptr), order(Pre){}
-		iterator(void* p) : point(nullptr), order(Pre){stack.CreateNode((node*)p);}
-		~iterator(){stack.AllReleaseNode();}
-		T& Data(){return point->m_Data;}
-
-		bool isLast(){if(stack.GetNumber() == 0 && point == nullptr){return true;} else{return false;}}
-
-		void SetPreOrder(){order = Pre;}
-		void SetInOrder(){order = In;}
-		void SetPostOrder(){order = Post;}
-		void SetLevelOrder(){order = Level;}
-
-		void operator =(const void*& p){this->point = p;}
-		void operator ++(){
-			if(stack.GetNumber() == 0){
-				point = nullptr;
-				return;
-			}
-			List<node*>::iterator iter;
-			bool check = true;
-			switch(order){
-			case Pre:
-				point = stack.GetData(0);
-				stack.ReleaseNode((UINT)0);
-				iter = point->m_Child[1].Begin();
-				for(UINT i = 0 ; iter != point->m_Child[1].End() ; ++iter, ++i){
-					stack.CreateNode(iter.Data(), i);
-				}
-				iter = point->m_Child[0].Begin();
-				for(UINT i = 0 ; iter != point->m_Child[0].End() ; ++iter, ++i){
-					stack.CreateNode(iter.Data(), i);
-				}
-				stack.CreateNode(point, 0);
-				point = stack.GetData(0);
-				stack.ReleaseNode((UINT)0);
-				break;
-			case In:
-				check = true;
-				if(point != nullptr && point->m_pParent != nullptr){
-					iter = point->m_pParent->m_Child[0].Begin();
-					for( ; iter != point->m_pParent->m_Child[0].End() ; ++iter){
-						if(point == iter.Data()){
-							check = false;
-							break;
-						}
-					}
-				}
-				point = stack.GetData(0);
-				stack.ReleaseNode((UINT)0);
-				while(check){
-					iter = point->m_Child[1].Begin();
-					for(UINT i = 0 ; iter != point->m_Child[1].End() ; ++iter, ++i){
-						stack.CreateNode(iter.Data(), i);
-					}
-					if(point->m_Child[0].GetNumber() == 0){break;}
-					stack.CreateNode(point, 0);
-					iter = point->m_Child[0].Begin();
-					for(UINT i = 0 ; iter != point->m_Child[0].End() ; ++iter, ++i){
-						stack.CreateNode(iter.Data(), i);
-					}
-					point = stack.GetData(0);
-					stack.ReleaseNode((UINT)0);
-				}
-				break;
-			case Post:
-				break;
-			case Level:
-				break;
-			}
-		}
-		//bool operator ==(const void* p){if(this->point == p){return true;} else{return false;}}
-		//bool operator !=(const void* p){if(this->point != p){return true;} else{return false;}}
-		operator void*(){return point;}
-	};
-
-	class searcher{
-	private:
-		node* point;
-	public:
-		searcher() : point(nullptr){}
-		searcher(void* p) : point((node*)p){}
-		~searcher(){}
-
-		T& Data(){return point->m_Data;}
-
-		void Prev(){if(point->m_pParent != nullptr){point = point->m_pParent;}}
-		void Left(UINT num){if(point->m_Child[0].GetNumber() != 0){point = point->m_Child[0].GetData(num);}}
-		void Right(UINT num){if(point->m_Child[1].GetNumber() != 0){point = point->m_Child[1].GetData(num);}}
-
-		void operator =(const void*& p){this->point = p;}
-		bool operator ==(const void* p){if(this->point == p){return true;} else{return false;}}
-		bool operator !=(const void* p){if(this->point != p){return true;} else{return false;}}
-		operator void*(){return point;}
-	};
-};	//Double List Tree

@@ -30,22 +30,19 @@ public:
 	void ObjectUpdate(){	//SetPreOrder
 		List<OBJECT*>::iterator iter = m_List.Begin();
 		for( ; iter != m_List.End() ; iter.Next()){
-			iter.Data()->update();
+			(*iter)->update();
 		}
 	}
-	void GraphicRender(){	//SerPostOrder
+	void GraphicRender(UINT& tick){	//SerPostOrder
 		List<OBJECT*>::iterator iter = m_List.Begin();
 		for( ; iter != m_List.End() ; iter.Next()){
-			OBJECT* obj = iter.Data();
-			if(obj->GetMesh() != nullptr){
-				_O_Graphics::GetSingleton()->RenderObject(&(obj->GetGraphics()));
-			}
-			if(obj->GetSkeletal() != nullptr){
-				WLTree<JOINT>::iterator t_iter = obj->GetSkeletal()->skeletal.Begin();
-				t_iter.SetInOrder();
-				for(++t_iter ; !t_iter.isLast() ; ++t_iter){
-					_O_Graphics::GetSingleton()->RenderObject(&obj->GetGraphics(t_iter));
-				}
+			OBJECT* obj = *iter;
+			obj->ActAnimation(tick);
+			obj->WorldUpdate();
+			List<MESH>::iterator iter = obj->GetMesh().Begin();
+			void* end = obj->GetMesh().End();
+			for( ; iter != end ; ++iter){
+				_O_Graphics::GetSingleton()->RenderObject(iter->GetGraphics());
 			}
 		}
 	}

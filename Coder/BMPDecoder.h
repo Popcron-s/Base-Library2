@@ -2,7 +2,7 @@
 
 #include "..\\Common\\variable.h"
 
-bool BMPDecoder(BYTE* buf, UINT size, IMAGE* image_data){
+bool BMPDecoder(BYTE* buf, UINT size, IMAGE& image_data){
 	if(buf == nullptr){return false;}
 	if(buf[0] != 0x42 || buf[1] != 0x4D){return false;}
 #define little_b2i(a,b,c,d) ((a) | (b<<8) | (c<<16) | (d<<24))
@@ -27,11 +27,11 @@ bool BMPDecoder(BYTE* buf, UINT size, IMAGE* image_data){
 	UINT wmb = (width*bit_depth)/8;
 
 	BYTE* image_buf = &(buf[offset]);
-	image_data->width = width;
-	image_data->height = height;
-	image_data->bit_depth = bit_depth;
-	image_data->alpha_able = false;
-	image_data->buf = new BYTE[wmb*height];
+	image_data.width = width;
+	image_data.height = height;
+	image_data.bit_depth = bit_depth;
+	image_data.alpha_able = false;
+	image_data.buf = new BYTE[wmb*height];
 	
 	UINT pass_byte = wmb%4;
 	pass_byte = (pass_byte>0)?4-pass_byte:0;
@@ -40,7 +40,7 @@ bool BMPDecoder(BYTE* buf, UINT size, IMAGE* image_data){
 	for(UINT y = height ; y>0 ; --y){
 		for(UINT x = 0 ; x<width ; ++x){
 			for(UINT bit = bit_depth/8 ; bit>0 ; --bit){
-				image_data->buf[((y-1)*wmb)+(x*(bit_depth/8))+(bit-1)] = image_buf[i];
+				image_data.buf[((y-1)*wmb)+(x*(bit_depth/8))+(bit-1)] = image_buf[i];
 				++i;
 			}
 		}

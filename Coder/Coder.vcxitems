@@ -14,7 +14,18 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Adler32.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BMPDecoder.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BMPEncoder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ChunkReader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ChunkWriter.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Coder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CRC32.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Deflate.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Inflate.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PNGDecoder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PNGEncoder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)WAVDecoder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)WAVEncoder.h" />
   </ItemGroup>
 </Project>
