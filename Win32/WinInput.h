@@ -40,59 +40,70 @@ public:
 		}
 		return m_pSingleton;
 	}
+#include <iostream>
 	void Update(){
-		//Keyboard
-		for(UINT i = 0 ; i<0x100 ; ++i){
-			if(GetAsyncKeyState(i) & 0x8001){
-				if(m_pKeyboard->KEY[i] & 0x80){
-					m_pKeyboard->KEY[i] = 0x80;
-				}
-				else{
-					m_pKeyboard->KEY[i] = 0x81;
-				}
-			}
-			else{
-				if(m_pKeyboard->KEY[i] & 0x80){
-					m_pKeyboard->KEY[i] = 0x01;
-				}
-				else{
-					m_pKeyboard->KEY[i] = 0x00;
-				}
-			}
-		}
 		//Mouse
-
-#define MOUSE_CLICK(key,num)												\
-		if(GetAsyncKeyState(key) & 0x8001){									\
-			if(m_pMouse->button[num] & 0x80){								\
-				m_pMouse->button[num] = 0x80;								\
-			}																\
-			else{															\
-				if(GetDoubleClickTime() >= (GetTickCount()-cur_time[num])){	\
-					m_pMouse->button[num] = 0x82;							\
-					cur_time[num] = GetTickCount();							\
-				}															\
-				else{														\
-					m_pMouse->button[num] = 0x81;							\
-					cur_time[num] = GetTickCount();							\
-				}															\
-			}																\
-		}																	\
-		else{																\
-			if(m_pMouse->button[num] & 0x80){								\
-				m_pMouse->button[num] = 0x01;								\
-			}																\
-			else{															\
-				m_pMouse->button[num] = 0x00;								\
-			}																\
-		}
 		GetCursorPos((LPPOINT)m_pMouse);
 		ScreenToClient(Windows::GetSingleton()->Gethwnd(), (LPPOINT)m_pMouse);
-		MOUSE_CLICK(VK_LBUTTON,0)
-		MOUSE_CLICK(VK_RBUTTON,1)
-		MOUSE_CLICK(VK_MBUTTON,2)
-		MOUSE_CLICK(VK_XBUTTON1,3)
-		MOUSE_CLICK(VK_XBUTTON2,4)
+		if( 0 > m_pMouse->x || m_pMouse->x > (Windows::GetSingleton()->GetWindowSize().x-10) || 
+			0 > m_pMouse->y || m_pMouse->y > (Windows::GetSingleton()->GetWindowSize().y-10) ){
+			for(UINT i = 0 ; i<0x08 ; ++i){m_pMouse->button[i] = 0x00;}
+		}
+		else{
+#define MOUSE_CLICK(key,num)												\
+	if(GetAsyncKeyState(key) & 0x8001){									\
+		if(m_pMouse->button[num] & 0x80){								\
+			m_pMouse->button[num] = 0x80;								\
+		}																\
+		else{															\
+			if(GetDoubleClickTime() >= (GetTickCount()-cur_time[num])){	\
+				m_pMouse->button[num] = 0x82;							\
+				cur_time[num] = GetTickCount();							\
+			}															\
+			else{														\
+				m_pMouse->button[num] = 0x81;							\
+				cur_time[num] = GetTickCount();							\
+			}															\
+		}																\
+	}																	\
+	else{																\
+		if(m_pMouse->button[num] & 0x80){								\
+			m_pMouse->button[num] = 0x01;								\
+		}																\
+		else{															\
+			m_pMouse->button[num] = 0x00;								\
+		}																\
+	}
+			MOUSE_CLICK(VK_LBUTTON,0)
+			MOUSE_CLICK(VK_RBUTTON,1)
+			MOUSE_CLICK(VK_MBUTTON,2)
+			MOUSE_CLICK(VK_XBUTTON1,3)
+			MOUSE_CLICK(VK_XBUTTON2,4)
 #undef MOUSE_CLICK
+		}
+		//Keyboard
+		if(GetFocus() == Windows::GetSingleton()->Gethwnd()){
+			for(UINT i = 0 ; i<0x100 ; ++i){
+				if(GetAsyncKeyState(i) & 0x8001){
+					if(m_pKeyboard->KEY[i] & 0x80){
+						m_pKeyboard->KEY[i] = 0x80;
+					}
+					else{
+						m_pKeyboard->KEY[i] = 0x81;
+					}
+				}
+				else{
+					if(m_pKeyboard->KEY[i] & 0x80){
+						m_pKeyboard->KEY[i] = 0x01;
+					}
+					else{
+						m_pKeyboard->KEY[i] = 0x00;
+					}
+				}
+			}
+		}
+		else{
+			for(UINT i = 0 ; i<0x100 ; ++i){m_pKeyboard->KEY[i] = 0x00;}
+		}
 	}
 };

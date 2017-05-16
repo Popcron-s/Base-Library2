@@ -198,6 +198,7 @@ public:
 		}
 	}
 	ANIMATION& GetAnimation(){return *m_ani;}
+	void SetAnimation(ANIMATION* ani){m_ani = ani;}
 
 private:
 	//module

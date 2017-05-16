@@ -7,11 +7,12 @@ class __declspec(dllexport) _Graph{
 protected:
 	_GRAPH::TYPE type;
 	UINT time;
+	UINT cur;
 	bool Loop;
 	bool Auto;
 
 public:
-	_Graph() : type(_GRAPH::TYPE::STOP), time(0), Loop(false), Auto(false){}
+	_Graph() : type(_GRAPH::TYPE::STOP), time(0), cur(0), Loop(false), Auto(false){}
 	~_Graph(){}
 
 	void SetLoop(bool b){Loop = b;}
@@ -23,6 +24,8 @@ public:
 	void Play(){type = _GRAPH::TYPE::PLAY;}
 	void Stop(){time = 0; Auto = false; type = _GRAPH::TYPE::STOP;}
 	void Pause(){type = _GRAPH::TYPE::PAUSE;}
+	void Seek(UINT t){time = t;		cur = 0;}
+	_GRAPH::TYPE GetType(){return type;}
 
 	virtual void update(UINT tick) = 0;
 };
@@ -37,11 +40,10 @@ private:
 		UINT time;
 	}*arr;
 	const UINT arr_num;
-	UINT cur;
 
 public:
-	_Graph_template(T& t, UINT n) : _Graph(), target(t), arr(new _node[n]), arr_num(n), cur(0){}
-	~_Graph_template(){delete [] arr;}
+	_Graph_template(T& t, UINT n) : _Graph(), target(t), arr(new _node[n]), arr_num(n){}
+	~_Graph_template(){if(arr != nullptr){delete [] arr; arr = nullptr}}
 
 	//_node& operator [](UINT num){return arr[num];}
 
@@ -65,9 +67,9 @@ public:
 	}
 
 	void update(UINT tick){
-		if(type != _GRAPH::PLAY){
+		if(type != _GRAPH::TYPE::PLAY){
 			if(Auto){
-				type = _GRAPH::PLAY;
+				type = _GRAPH::TYPE::PLAY;
 			}
 			else{
 				return;
@@ -84,6 +86,7 @@ public:
 					time = 0;
 					target = arr[cur].value;
 					cur = 0;
+					type = _GRAPH::TYPE::STOP;
 					return;
 				}
 			}
@@ -105,11 +108,10 @@ private:
 		UINT time;
 	}*arr;
 	const UINT arr_num;
-	UINT cur;
 
 public:
-	_Graph_function(T* t, UINT n) : _Graph(), target(t), arr(new _node[n]), arr_num(n), cur(0){}
-	~_Graph_function(){delete [] arr;}
+	_Graph_function(T* t, UINT n) : _Graph(), target(t), arr(new _node[n]), arr_num(n){}
+	~_Graph_function(){if(arr != nullptr){delete [] arr; arr = nullptr}}
 
 	//_node& operator [](UINT num){return arr[num];}
 
@@ -135,12 +137,25 @@ public:
 			else{
 				time = 0;
 				cur = 0;
+				type = _GRAPH::TYPE::STOP;
 				return;
 			}
 		}
-		if(arr[cur].time > time){
+		while(arr[cur].time < time){
 			(target->*(arr[cur].func))();
 			++cur;
+			if(cur == arr_num){
+				if(Loop){
+					time -= arr[cur-1].time;
+					cur = 0;
+				}
+				else{
+					time = 0;
+					cur = 0;
+					type = _GRAPH::TYPE::STOP;
+					return;
+				}
+			}
 			return;
 		}
 	}
@@ -159,14 +174,32 @@ public:
 		}
 	}
 	~ANIMATION(){
-		for(UINT i = 0 ; i<m_MaxClip ; ++i){
-			if(m_Clip[i] != nullptr){
-				delete m_Clip[i];
-				m_Clip = nullptr;
+		if(m_Clip != nullptr){
+			for(UINT i = 0 ; i<m_MaxClip ; ++i){
+				if(m_Clip[i] != nullptr){
+					delete m_Clip[i];
+					m_Clip = nullptr;
+				}
 			}
+			delete [] m_Clip;
+			m_Clip = nullptr;
 		}
-		delete [] m_Clip;
-		m_Clip = nullptr;
+	}
+
+	void Play(){for(UINT i = 0 ; i<m_MaxClip ; ++i){(m_Clip[i])->Play();}}
+	void Stop(){for(UINT i = 0 ; i<m_MaxClip ; ++i){(m_Clip[i])->Stop();}}
+	void Pause(){for(UINT i = 0 ; i<m_MaxClip ; ++i){(m_Clip[i])->Pause();}}
+	void SetAuto(bool b){for(UINT i = 0 ; i<m_MaxClip ; ++i){(m_Clip[i])->SetAuto(b);}}
+	void SetLoop(bool b){for(UINT i = 0 ; i<m_MaxClip ; ++i){(m_Clip[i])->SetLoop(b);}}
+	void Seek(UINT time){for(UINT i = 0 ; i<m_MaxClip ; ++i){(m_Clip[i])->Seek(time);}}
+	_GRAPH::TYPE GetType(){
+		bool pause = false;
+		for(UINT i = 0 ; i<m_MaxClip ; ++i){
+			if((m_Clip[i])->GetType() == _GRAPH::TYPE::PLAY){return _GRAPH::TYPE::PLAY;}
+			else if((m_Clip[i])->GetType() == _GRAPH::TYPE::PAUSE){pause = false;}
+		}
+		if(pause){return _GRAPH::TYPE::PAUSE;}
+		return _GRAPH::TYPE::STOP;
 	}
 
 	_Graph*& operator [] (UINT i){return m_Clip[i];}
